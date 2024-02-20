@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.contrib import admin
+from django.db.models import F
 from django.utils.translation import gettext_lazy as _
 
 try:
@@ -18,8 +19,9 @@ class TaskResultAdmin(admin.ModelAdmin):
 
     model = TaskResult
     date_hierarchy = 'date_done'
-    list_display = ('task_id', 'periodic_task_name', 'task_name', 'date_done',
-                    'status', 'worker')
+    list_display = ('task_id', 'task_name', 'date_created', 'date_done',
+                    'get_processing_time', 'status', 'worker', 
+                    'periodic_task_name')
     list_filter = ('status', 'date_done', 'periodic_task_name', 'task_name',
                    'worker')
     readonly_fields = ('date_created', 'date_done', 'result', 'meta')
@@ -57,6 +59,13 @@ class TaskResultAdmin(admin.ModelAdmin):
         }),
     )
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            _processing_time=F("date_done") - F("date_created"),
+        )
+        return queryset
+    
     def get_readonly_fields(self, request, obj=None):
         if ALLOW_EDITS:
             return self.readonly_fields
@@ -65,6 +74,13 @@ class TaskResultAdmin(admin.ModelAdmin):
                 field.name for field in self.opts.local_fields
             })
 
+    def get_processing_time(self, obj):
+        minutes = int(obj._processing_time.seconds / 60)
+        seconds = int(obj._processing_time.seconds % 60)
+        return f"{minutes}:{seconds:02d} mins"
+
+    get_processing_time.short_description = "Processing time"
+    get_processing_time.admin_order_field = "_processing_time"
 
 admin.site.register(TaskResult, TaskResultAdmin)
 
