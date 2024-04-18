@@ -20,8 +20,8 @@ class TaskResultAdmin(admin.ModelAdmin):
     model = TaskResult
     date_hierarchy = 'date_done'
     list_display = ('task_id', 'task_name', 'date_created', 'date_done',
-                    'get_processing_time', 'status', 'worker', 
-                    'periodic_task_name')
+                    'task_args', 'task_kwargs', 'get_processing_time', 
+                    'status', 'worker', 'periodic_task_name')
     list_filter = ('status', 'date_done', 'periodic_task_name', 'task_name',
                    'worker')
     readonly_fields = ('date_created', 'date_done', 'result', 'meta')
